@@ -46,7 +46,7 @@ const char *libtz_tzinfo_name(const tzinfo_t *zi);
 const char *libtz_tzzone_name(const tzzone_t *tz);
 int libtz_tzzone_offset(const tzzone_t *tz);
 bool libtz_tzzone_dst(const tzzone_t *tz);
-tzzone_t *libttz_tzzone_at(const tzinfo_t *zi, int64_t whence);
+tzzone_t *libtz_tzzone_at(const tzinfo_t *zi, int64_t whence);
 
 struct tm *libtz_zonetime(const tzinfo_t *zi, const time_t *timep, struct tm *result, const tzzone_t **);
 

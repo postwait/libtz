@@ -182,7 +182,7 @@ libtz_tzzone_dst(const tzzone_t *tz) {
   return tz ? tz->dst : 0;
 }
 
-tzzone_t *libttz_tzzone_at(const tzinfo_t *zi, int64_t whence) {
+tzzone_t *libtz_tzzone_at(const tzinfo_t *zi, int64_t whence) {
   int l = 1, r = zi->timecnt;
   if(r == 0) return &zi->tz[0];
   int i = (l+r)/2;
@@ -208,7 +208,7 @@ libtz_zonetime(const tzinfo_t *zi, const time_t *timep, struct tm *result, const
   time_t whence;
   if(!zi) return NULL;
   whence = timep ? *timep : time(NULL);
-  tzzone_t *tz = libttz_tzzone_at(zi, whence);
+  tzzone_t *tz = libtz_tzzone_at(zi, whence);
   if(!tz) return NULL;
   whence += tz->offset;
   rv = gmtime_r(&whence, result);
