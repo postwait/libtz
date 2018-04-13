@@ -141,13 +141,16 @@ static struct tzinfo *parse_tzfile(int fd, const char **err) {
   return zi;
 }
 
-struct tzinfo *libtz_open(const char *zonename, const char **err) {
+tzinfo_t *libtz_open(const char *zonename, const char **err) {
+  tzinfo_t *zi;
   int fd = tzfile_open(zonename);
   if(fd < 0) {
     if(err) *err = "open failed";
     return NULL;
   }
-  return parse_tzfile(fd, err);
+  zi = parse_tzfile(fd, err);
+  close(fd);
+  return zi;
 }
 
 void libtz_free_tzinfo(struct tzinfo *zi) {
