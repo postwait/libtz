@@ -89,5 +89,7 @@ int main() {
   T(is(res->tm_isdst == 0));
   T(is(res->tm_hour == 16));
 
+  libtz_free_tzinfo(useast);
+
   exit(!(failed==0));
 }

@@ -48,7 +48,7 @@ libtz.$(LIBEXT):	$(OBJS_LO)
 	$(SHLD) $(EXTRA_SHLDFLAGS) $(SHLDFLAGS) -o $@ $(OBJS_LO)
 
 .c.o:
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ -c $<
 
 .c.lo:
 	$(CC) $(SHCPPFLAGS) $(SHCFLAGS) $(CFLAGS) -o $@ -c $<
