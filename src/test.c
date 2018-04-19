@@ -67,6 +67,11 @@ static void is(int expr) {
   test_desc = "??"; \
 } while(0)
 
+#define bail(a) do { \
+  printf("err: %s\n", a); \
+  return 0; \
+} while(0)
+
 int main() {
   const char *err;
   tzinfo_t *useast = libtz_open("US/Eastern", &err);
@@ -90,6 +95,5 @@ int main() {
   T(is(res->tm_hour == 16));
 
   libtz_free_tzinfo(useast);
-
   exit(!(failed==0));
 }

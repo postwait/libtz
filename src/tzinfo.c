@@ -217,3 +217,39 @@ libtz_zonetime(const tzinfo_t *zi, const time_t *timep, struct tm *result, const
   if(tzr) *tzr = tz;
   return rv;
 }
+
+size_t
+libtz_strftime(char *buf, size_t buflen, const char *fmt, const struct tm *tm, const tzzone_t *tz) {
+  char pfmt[2048];
+  int in, out;
+  for(in=0, out=0; fmt[in] != '\0' && out < sizeof(pfmt)-1;) {
+    if(fmt[in] == '%') {
+      if(fmt[in+1] == 'Z') {
+        size_t len = snprintf(pfmt+out, sizeof(pfmt)-out, "%s", libtz_tzzone_name(tz));
+        if(len < 0) return len;
+        out += len;
+        in += 2;
+        continue;
+      }
+      else if(fmt[in+1] == 'z') {
+        int offset = libtz_tzzone_offset(tz);
+        int sign = offset >= 0 ? 1 : - 1;
+        offset *= sign;
+        int hours = offset / 3600;
+        int minutes = (offset - 3600*hours) / 60;
+        size_t len = snprintf(pfmt+out, sizeof(pfmt)-out, "%c%02d%02d", sign > 0 ? '+' : '-', hours, minutes);
+        if(len < 0) return len;
+        out += len;
+        in += 2;
+        continue;
+      }
+      else if(fmt[in+1] == '%') {
+        pfmt[out++] = fmt[in++];
+      }
+    }
+    pfmt[out++] = fmt[in++];
+  }
+  if(out >= sizeof(pfmt)) out = sizeof(pfmt)-1;
+  pfmt[out] = '\0';
+  return strftime(buf, buflen, pfmt, tm);
+}
