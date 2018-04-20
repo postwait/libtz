@@ -53,12 +53,19 @@ struct tzinfo {
   int typecnt;
   int charcnt;
   int *trans_times;
-  int8_t *trans_types;
+  uint8_t *trans_types;
   char *strbuf;
   struct tzzone *tz, *normaltz;
   int *leap_secs;
 };
 
+#ifndef DEFAULT_ZONEINFO
+#ifdef __sun
+#define DEFAULT_ZONEINFO "/usr/share/lib/zoneinfo"
+#else
+#define DEFAULT_ZONEINFO "/usr/share/zoneinfo"
+#endif
+#endif
 static const char *base_default = DEFAULT_ZONEINFO;
 static char *base = NULL;
 
@@ -86,6 +93,7 @@ static int readInt(int fd, int *target) {
   *target = ntohl(*target);
   return 0;
 }
+#undef ERR
 #define ERR(str) do { \
   if(err) *err = (str); \
   libtz_free_tzinfo(zi); \
@@ -96,8 +104,8 @@ static struct tzinfo *parse_tzfile(int fd, const char **err) {
   if(err) *err = NULL;
   if(fd < 0) ERR("bad file");
   char buf[5];
-  if(read(fd, buf, 5) != 5) ERR("failure to read header");
-  if(memcmp(buf, "TZif2", 5)) ERR("invalid header");
+  if(read(fd, buf, 4) != 4) ERR("failure to read header");
+  if(memcmp(buf, "TZif", 4)) ERR("invalid header");
   if(lseek(fd, 28, SEEK_SET) != 28) ERR("data missing");
   if(readInt(fd, &zi->leapcnt) != 0) ERR("missing leap cnt");
   if(readInt(fd, &zi->timecnt) != 0) ERR("missing time cnt");
@@ -114,8 +122,10 @@ static struct tzinfo *parse_tzfile(int fd, const char **err) {
   int i;
   for(i=0; i<zi->timecnt; i++)
     if(readInt(fd, &zi->trans_times[i]) != 0) ERR("short file");
-  for(i=0; i<zi->timecnt; i++)
+  for(i=0; i<zi->timecnt; i++) {
     if(read(fd, &zi->trans_types[i], 1) != 1) ERR("short file");
+    if(zi->trans_types[i] >= zi->typecnt) ERR("bad data");
+  }
   for(i=0; i<zi->typecnt; i++) {
     if(readInt(fd, &zi->tz[i].offset) != 0) ERR("short file");
     if(read(fd, &zi->tz[i].dst, 1) != 1) ERR("short file");
