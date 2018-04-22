@@ -111,12 +111,14 @@ static struct tzinfo *parse_tzfile(int fd, const char **err) {
   if(readInt(fd, &zi->timecnt) != 0) ERR("missing time cnt");
   if(readInt(fd, &zi->typecnt) != 0) ERR("missing type cnt");
   if(readInt(fd, &zi->charcnt) != 0) ERR("missing char cnt");
-  if(zi->timecnt < 1 || zi->timecnt > 10240) ERR("bad time cnt");
+  if(zi->timecnt < 0 || zi->timecnt > 10240) ERR("bad time cnt");
   if(zi->typecnt < 1 || zi->typecnt > 10240) ERR("bad type cnt");
   if(zi->leapcnt < 0 || zi->leapcnt > 10240) ERR("bad leap cnt");
   if(zi->charcnt < 1 || zi->charcnt > 256000) ERR("bad char cnt");
-  zi->trans_times = calloc(zi->timecnt, sizeof(int));
-  zi->trans_types = calloc(zi->timecnt, sizeof(int));
+  if(zi->timecnt > 0) {
+    zi->trans_times = calloc(zi->timecnt, sizeof(int));
+    zi->trans_types = calloc(zi->timecnt, sizeof(int));
+  }
   zi->leap_secs = calloc(zi->leapcnt * 2, sizeof(int));
   zi->tz = calloc(zi->typecnt, sizeof(*zi->tz));
   int i;
@@ -136,8 +138,8 @@ static struct tzinfo *parse_tzfile(int fd, const char **err) {
   for(i=0; i<zi->typecnt; i++) {
     int pos = zi->tz[i].idx;
     int end = pos;
-    if(pos >= zi->charcnt) ERR("malformed file");
-    while(end < zi->charcnt && zi->strbuf[end] != 0) end++;
+    if(end < 0 || end >= zi->charcnt) ERR("malformed file");
+    while(end < zi->charcnt-1 && zi->strbuf[end] != 0) end++;
     if(zi->strbuf[end] != 0) ERR("malformed file");
     zi->tz[i].name = zi->strbuf + pos;
   }
@@ -235,7 +237,7 @@ libtz_strftime(char *buf, size_t buflen, const char *fmt, const struct tm *tm, c
   for(in=0, out=0; fmt[in] != '\0' && out < sizeof(pfmt)-1;) {
     if(fmt[in] == '%') {
       if(fmt[in+1] == 'Z') {
-        size_t len = snprintf(pfmt+out, sizeof(pfmt)-out, "%s", libtz_tzzone_name(tz));
+        ssize_t len = snprintf(pfmt+out, sizeof(pfmt)-out, "%s", libtz_tzzone_name(tz));
         if(len < 0) return len;
         out += len;
         in += 2;
@@ -247,7 +249,7 @@ libtz_strftime(char *buf, size_t buflen, const char *fmt, const struct tm *tm, c
         offset *= sign;
         int hours = offset / 3600;
         int minutes = (offset - 3600*hours) / 60;
-        size_t len = snprintf(pfmt+out, sizeof(pfmt)-out, "%c%02d%02d", sign > 0 ? '+' : '-', hours, minutes);
+        ssize_t len = snprintf(pfmt+out, sizeof(pfmt)-out, "%c%02d%02d", sign > 0 ? '+' : '-', hours, minutes);
         if(len < 0) return len;
         out += len;
         in += 2;
